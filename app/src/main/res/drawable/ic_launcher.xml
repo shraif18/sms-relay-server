@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimal launcher icon — a green tile with a white speech bubble.
+  Replaces a missing PNG mipmap so the build doesn't fail at
+  processDebugResources. Feel free to drop in a real icon later via
+  Android Studio's Image Asset Studio.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background -->
+    <path
+        android:fillColor="#FF4CAF50"
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+
+    <!-- White speech bubble -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M30,28
+                          L78,28
+                          A8,8 0 0 1 86,36
+                          L86,62
+                          A8,8 0 0 1 78,70
+                          L48,70
+                          L36,80
+                          L36,70
+                          L30,70
+                          A8,8 0 0 1 22,62
+                          L22,36
+                          A8,8 0 0 1 30,28 Z" />
+</vector>

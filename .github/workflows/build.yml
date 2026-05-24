@@ -1,0 +1,51 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # Pin Gradle to 8.4 — the project uses Android Gradle Plugin 8.0.2,
+    # which is incompatible with Gradle 9.x (DependencyHandler.module API
+    # was removed). Gradle 8.4 is the safe sweet spot.
+    - name: Set up Gradle 8.4
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '8.4'
+
+    # The repo doesn't include the Gradle wrapper (gradlew + gradle-wrapper.jar).
+    # Generate it on the fly using the gradle binary the action installed.
+    - name: Generate Gradle wrapper if missing
+      run: |
+        if [ ! -f gradlew ]; then
+          echo "Gradle wrapper not found — generating it..."
+          gradle wrapper --gradle-version 8.4 --distribution-type bin
+        fi
+        chmod +x gradlew
+        ls -la gradlew gradle/wrapper/ || true
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --stacktrace
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: sms-forwarder-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        if-no-files-found: error
