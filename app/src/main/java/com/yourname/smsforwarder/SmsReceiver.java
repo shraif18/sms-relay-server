@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Receives incoming SMS messages and forwards each OTP code to ntfy.sh.
+ * Receives incoming SMS messages and forwards each OTP code to the agent's CRM.
  *
  * No service is used — starting Android 8, apps in the background may not call
  * context.startService(). We rely on BroadcastReceiver.goAsync() to keep the
@@ -62,9 +62,10 @@ public class SmsReceiver extends BroadcastReceiver {
 
         // Read configuration synchronously (fast, no network).
         SharedPreferences prefs = context.getSharedPreferences("SMSForwarder", Context.MODE_PRIVATE);
-        final String topic = prefs.getString("ntfy_topic", "");
-        if (topic.isEmpty()) {
-            Log.w(TAG, "No ntfy topic configured — open the app and save settings.");
+        final String baseUrl = prefs.getString("crm_base_url", "");
+        final String token = prefs.getString("crm_token", "");
+        if (baseUrl.isEmpty() || token.isEmpty()) {
+            Log.w(TAG, "CRM not configured — open the app and save the connection.");
             return;
         }
 
@@ -80,15 +81,16 @@ public class SmsReceiver extends BroadcastReceiver {
                         String message = entry.getValue().toString();
                         Log.d(TAG, "From: " + sender + ", Message: " + message);
 
+                        // Privacy filter: only forward messages that look like a
+                        // login code; the CRM re-extracts the code from the body.
                         String code = extractCode(message);
                         if (code == null) {
                             Log.d(TAG, "No code found in message — skipping");
                             continue;
                         }
-                        Log.d(TAG, "Code extracted: " + code);
-                        boolean ok = NtfyClient.send(topic, sender, message, code);
+                        boolean ok = CrmClient.send(baseUrl, token, sender, message);
                         if (!ok) {
-                            Log.e(TAG, "Failed to forward code to ntfy.sh");
+                            Log.e(TAG, "Failed to forward code to CRM");
                         }
                     }
                 } catch (Throwable t) {
