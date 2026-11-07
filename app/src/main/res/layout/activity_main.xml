@@ -17,31 +17,42 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="מעביר קודי SMS לדפדפן דרך ntfy.sh"
+        android:text="מעביר קודי התחברות ל-CRM שלך"
         android:textSize="13sp"
         android:layout_marginBottom="32dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="שם הטופיק ב-ntfy.sh:"
+        android:text="קוד חיבור מה-CRM (או מלא כתובת וטוקן למטה):"
         android:textSize="16sp"
         android:layout_marginBottom="8dp" />
 
     <EditText
-        android:id="@+id/topicInput"
+        android:id="@+id/pairInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="לדוגמה: shimon-otp-XXXXXXXX"
-        android:inputType="text"
+        android:hint='{"base_url":"https://...","token":"..."}'
+        android:inputType="textMultiLine"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/crmUrlInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="כתובת ה-CRM"
+        android:inputType="textUri"
         android:padding="12dp"
         android:layout_marginBottom="8dp" />
 
-    <TextView
+    <EditText
+        android:id="@+id/tokenInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="חייב להיות זהה לערך NTFY_TOPIC ב-content.js של תוסף ה-Chrome."
-        android:textSize="12sp"
+        android:hint="טוקן מכשיר"
+        android:inputType="text"
+        android:padding="12dp"
         android:layout_marginBottom="24dp" />
 
     <Button

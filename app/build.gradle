@@ -2,22 +2,42 @@ plugins {
     id 'com.android.application'
 }
 
+// Release signing comes from CI secrets (see .github/workflows/build.yml).
+// The same key must sign every release, or installed apps can't be updated.
+def signingKeystore = System.getenv('SIGNING_KEYSTORE_PATH')
+
 android {
     namespace 'com.yourname.smsforwarder'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.yourname.smsforwarder"
+        // Final, distributable app ID (changing it later breaks updates).
+        applicationId "il.co.brownins.otprelay"
         minSdk 24
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger())
+        versionName "2.0.${System.getenv('GITHUB_RUN_NUMBER') ?: '0'}"
+    }
+
+    signingConfigs {
+        release {
+            if (signingKeystore) {
+                storeFile file(signingKeystore)
+                storeType 'pkcs12'
+                storePassword System.getenv('SIGNING_STORE_PASSWORD')
+                keyAlias 'release'
+                keyPassword System.getenv('SIGNING_STORE_PASSWORD')
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (signingKeystore) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {

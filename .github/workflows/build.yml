@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, 'feat/**', 'test/**' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -10,6 +10,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+      SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
 
     steps:
     - name: Checkout code
@@ -38,14 +42,38 @@ jobs:
           gradle wrapper --gradle-version 8.4 --distribution-type bin
         fi
         chmod +x gradlew
-        ls -la gradlew gradle/wrapper/ || true
 
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug --stacktrace
+    # Every release must be signed with the same key, or installed apps can't
+    # be updated. The key lives only in the repo's Actions secrets.
+    - name: Check signing secrets
+      run: |
+        if [ -z "$SIGNING_KEYSTORE_BASE64" ] || [ -z "$SIGNING_STORE_PASSWORD" ]; then
+          echo "::error::Missing secrets SIGNING_KEYSTORE_BASE64 / SIGNING_STORE_PASSWORD (Settings → Secrets and variables → Actions)."
+          exit 1
+        fi
+
+    - name: Decode keystore
+      run: |
+        echo "$SIGNING_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.p12"
+        echo "SIGNING_KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+
+    - name: Build signed release APK
+      run: ./gradlew assembleRelease --stacktrace
+
+    - name: Verify signature and name the APK
+      run: |
+        APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+        "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/app-release.apk
+        mkdir -p dist
+        cp app/build/outputs/apk/release/app-release.apk "dist/otp-relay-2.0.${GITHUB_RUN_NUMBER}.apk"
+
+    - name: Remove keystore
+      if: always()
+      run: rm -f "$RUNNER_TEMP/release.p12"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: sms-forwarder-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+        name: otp-relay-apk
+        path: dist/*.apk
         if-no-files-found: error
